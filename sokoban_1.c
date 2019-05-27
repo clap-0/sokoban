@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <termio.h>
+#include <stdlib.h>
 
 #define LEVEL 5
 #define X 30
@@ -10,16 +11,24 @@ char map[LEVEL][Y][X];
 int level=-1;
 int player_x[LEVEL], player_y[LEVEL];
 int boxCount[LEVEL]={0}, storeCount[LEVEL]={0};
+char undo;
+char command;
 
 void User(void);
 int getch(void);			// 명령 입력
 void Display_help(void);	// 명령 d
 void Command(void);
 void read_map(void);
+void clear_map(void);
+void write_map(void);
+void player_move(void); 
 
 int main()
 {
 	read_map();
+	write_map();
+	Command();
+
 	return 0;
 }
 
@@ -35,7 +44,7 @@ void User()	// player 이름 받기
 	scanf("%s", username);
 }
 
-void read_map()
+void read_map() // map.txt에서 맵 배열에 넣기
 {
 	FILE *write_map;
 	write_map=fopen("map.txt","r");
@@ -48,22 +57,22 @@ void read_map()
 		if (c=='e'){
 			break;
 		}
-		if ((49 <= c)&&(c <= 53)){
+		if ((49 <= c)&&(c <= 53)){	// c가 1~5 사이의 수면 레벨 증가
 			level++;
 			y=-1;
 			continue;
 		}
 
-		if (c=='@'){
+		if (c=='@'){	// 플레이어 위치 저장
 			player_x[level]=x;
 			player_y[level]=y;
 		}
 
-		if (c=='$'){
+		if (c=='$'){	// 상자 수 세기
 			boxCount[level]++;
 		}
 
-		if (c=='O'){
+		if (c=='O'){	// 보관 장소 수 세기
 			storeCount[level]++;
 		}
 
@@ -91,9 +100,20 @@ void read_map()
 	fclose(write_map);
 }
 
+void clear_map()	// 맵 지우기
+{
+	system("clear");
+}
+
+void write_map()	// 맵 그리기
+{
+	for (int i = 0; i < Y; i++){
+		printf("%s\n", map[level][i]);
+	}
+}
+
 void Command()
 {
-	char command;
 
 	while (command != 'e')
 	{
@@ -101,16 +121,10 @@ void Command()
 
 		switch (command){
 			case 'h' :	// 왼쪽이동
-
-				break;
 			case 'j' :	// 아래이동
-
-				break;
 			case 'k' :	// 위이동
-
-				break;
 			case 'l' :	// 오른쪽이동
-
+				player_move();
 				break;
 			case 'u' :	// 되돌리기(undo)
 
@@ -156,6 +170,34 @@ int getch(void){
 	tcsetattr(0, TCSAFLUSH, &save);
 	
 	return ch;
+}
+
+void player_move(){	// 플레이어 상하좌우 이동
+	switch (command){
+		case 'h' : // 왼쪽 이동
+			map[level][player_y[level]][player_x[level]--] = '.';
+			map[level][player_y[level]][player_x[level]] = '@';
+			undo = command;
+			break;
+		case 'j' : // 아래 이동
+			map[level][player_y[level]++][player_x[level]] = '.';
+			map[level][player_y[level]][player_x[level]] = '@';
+			undo = command;
+			break;
+		case 'k' : // 위 이동
+			map[level][player_y[level]--][player_x[level]] = '.';
+			map[level][player_y[level]][player_x[level]] = '@';
+			undo = command;
+			break;
+		case 'l' : // 오른쪽 이동
+			map[level][player_y[level]][player_x[level]++] = '.';
+			map[level][player_y[level]][player_x[level]] = '@';
+			undo = command;
+			break;
+	}
+
+	clear_map();
+	write_map();
 }
 
 void Display_help(void){
