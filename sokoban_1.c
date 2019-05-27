@@ -1,40 +1,97 @@
 #include <stdio.h>
 #include <termio.h>
 
-char getch(void){
-	int ch;
+#define LEVEL 5
+#define X 30
+#define Y 30
 
-	struct termios buf;
-	struct termios save;
+char username[11];
+char map[LEVEL][Y][X];
+int level=-1;
+int player_x[LEVEL], player_y[LEVEL];
+int boxCount[LEVEL]={0}, storeCount[LEVEL]={0};
 
-	tcgetattr(0, &save);
-	buf = save;
-
-	buf.c_lflag&=~(ICANON|ECHO);
-	buf.c_cc[VMIN]=1;
-	buf.c_cc[VTIME]=0;
-
-	tcsetattr(0, TCSAFLUSH, &buf);
-
-	ch=getchar();
-	tcsetattr(0, TCSAFLUSH, &save);
-	
-	return ch;
-}
-
-void display_help(void){
-	printf("- h(왼쪽), j(아래), k(위), l(오른쪽) : 창고지기 조정\n");
-	printf("- u(undo) : 최대 5번 할 수 있음\n");
-	printf("- r(replay) : 현재 맵을 처음부터 다시 시작(움직임 횟수는 계속 유지)\n");
-	printf("- n(new) : 첫 번째 맵부터 다시 시작(움직임 횟수 기록 삭제)\n");
-	printf("- e(exit) : 게임 종료\n");
-	printf("- s(save) : 현재 상태 파일에 저장.\n");
-	printf("- f(file load) : save 시점에서부터 이어서 게임 시작\n");
-	printf("- d(display help) : 명령 내용 보여줌\n");
-	printf("- t(top) : 게임 순위 보여줌. t만 입력하면 전체 순위, t 다음 숫자가 오면 해당 맵의 순위\n");
-}
+void User(void);
+int getch(void);			// 명령 입력
+void Display_help(void);	// 명령 d
+void Command(void);
+void read_map(void);
 
 int main()
+{
+	read_map();
+	return 0;
+}
+
+void User()	// player 이름 받기
+{
+	printf("Start....\n");
+
+	// username을 공백으로 초기화
+	for (int i = 0; i < 11; i++)
+		username[i] = ' ';
+
+	printf("input Name : ");
+	scanf("%s", username);
+}
+
+void read_map()
+{
+	FILE *write_map;
+	write_map=fopen("map.txt","r");
+	
+	char c;
+
+	int x=0, y=0;
+	
+	while ((c = getc(write_map)) != EOF){
+		if (c=='e'){
+			break;
+		}
+		if ((49 <= c)&&(c <= 53)){
+			level++;
+			y=-1;
+			continue;
+		}
+
+		if (c=='@'){
+			player_x[level]=x;
+			player_y[level]=y;
+		}
+
+		if (c=='$'){
+			boxCount[level]++;
+		}
+
+		if (c=='O'){
+			storeCount[level]++;
+		}
+
+		if (c=='\n'){
+			y++;
+			x=0;
+		}
+
+		else {
+			map[level][y][x] = c;
+			x++;
+		}
+	}
+
+	// $개수와 O개수가 다르면 종료
+	for (int i = 0; i < LEVEL; i++){
+		if (boxCount[i] != storeCount[i]){
+			printf("오류| 박스의 개수와 보관장소의 개수가 다릅니다!");
+			return;
+		}
+	}
+
+	level = 0;
+
+	fclose(write_map);
+}
+
+void Command()
 {
 	char command;
 
@@ -74,9 +131,42 @@ int main()
 
 				break;
 			case 'd' :	// 명령 내용 출력
-				display_help();
+				Display_help();
 				break;
 		}
 	}
-	return 0;
 }
+
+int getch(void){
+	int ch;
+
+	struct termios buf;
+	struct termios save;
+
+	tcgetattr(0, &save);
+	buf = save;
+
+	buf.c_lflag&=~(ICANON|ECHO);
+	buf.c_cc[VMIN]=1;
+	buf.c_cc[VTIME]=0;
+
+	tcsetattr(0, TCSAFLUSH, &buf);
+
+	ch=getchar();
+	tcsetattr(0, TCSAFLUSH, &save);
+	
+	return ch;
+}
+
+void Display_help(void){
+	printf("- h(왼쪽), j(아래), k(위), l(오른쪽)\n");
+	printf("- u(undo)\n");
+	printf("- r(replay)\n");
+	printf("- n(new)\n");
+	printf("- e(exit)\n");
+	printf("- s(save)\n");
+	printf("- f(file load)\n");
+	printf("- d(display help)\n");
+	printf("- t(top)\n");
+}
+
