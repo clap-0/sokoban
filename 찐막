@@ -292,6 +292,7 @@ void clear_level() // 맵 단계 상승
 	  {
 		rank_print();
 		moveCount = 0; undoCount = 5;
+		undo[0][0][0] = '\0';
    	level++;
 	  }
 	  else	// 최대 레벨이면 클리어
@@ -314,6 +315,7 @@ void replay()    // 현제 맵 다시시작 움직인 횟수 유지
    }
    player_x[level] = player_x_save[level];
    player_y[level] = player_y_save[level];
+   undo[0][0][0] = '\0';
    write_map();
 }
 
@@ -333,11 +335,12 @@ void new()   // 처음부터 다시시작
       player_y[lv] = player_y_save[lv];
    }
    level = 0;
+   undo[0][0][0] = '\0';
    write_map();
 }
 
 
-void Exit()  //종료
+void Exit()  // 종료
 {
    clear_map();
    printf("S E E   Y O U   다시 올꺼죠? ㅠㅠ ");
@@ -500,6 +503,7 @@ void fileload()    // 저장된 맵 불러오기
       }
    }
    fclose(loadfile);
+   undo[0][0][0] = '\0';
 }
 
 void Display_help(void)  // 도움말 출력
